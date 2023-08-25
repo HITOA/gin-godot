@@ -1,0 +1,9 @@
+[configuration]
+
+entry_symbol = "GinGodotEntry"
+compatibility_minimum = 4.0
+
+[libraries]
+
+windows.debug.x86_64 = "res://bin/gin_godot.dll"
+windows.release.x86_64 = "res://bin/gin_godot.dll"
