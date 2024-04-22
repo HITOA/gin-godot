@@ -33,6 +33,8 @@
 
 #include <godot_cpp/core/defs.hpp>
 
+#include <godot_cpp/core/object_id.hpp>
+
 #include <godot_cpp/core/property_info.hpp>
 
 #include <godot_cpp/variant/variant.hpp>
@@ -49,8 +51,15 @@
 #define ADD_GROUP(m_name, m_prefix) godot::ClassDB::add_property_group(get_class_static(), m_name, m_prefix)
 #define ADD_SUBGROUP(m_name, m_prefix) godot::ClassDB::add_property_subgroup(get_class_static(), m_name, m_prefix)
 #define ADD_PROPERTY(m_property, m_setter, m_getter) godot::ClassDB::add_property(get_class_static(), m_property, m_setter, m_getter)
+#define ADD_PROPERTYI(m_property, m_setter, m_getter, m_index) godot::ClassDB::add_property(get_class_static(), m_property, m_setter, m_getter, m_index)
 
 namespace godot {
+
+namespace internal {
+
+Object *get_object_instance_binding(GodotObject *);
+
+} // namespace internal
 
 struct MethodInfo {
 	StringName name;
@@ -99,36 +108,14 @@ MethodInfo::MethodInfo(const PropertyInfo &p_ret, StringName p_name, const Args 
 	arguments = { args... };
 }
 
-class ObjectID {
-	uint64_t id = 0;
-
-public:
-	_FORCE_INLINE_ bool is_ref_counted() const { return (id & (uint64_t(1) << 63)) != 0; }
-	_FORCE_INLINE_ bool is_valid() const { return id != 0; }
-	_FORCE_INLINE_ bool is_null() const { return id == 0; }
-	_FORCE_INLINE_ operator uint64_t() const { return id; }
-	_FORCE_INLINE_ operator int64_t() const { return id; }
-
-	_FORCE_INLINE_ bool operator==(const ObjectID &p_id) const { return id == p_id.id; }
-	_FORCE_INLINE_ bool operator!=(const ObjectID &p_id) const { return id != p_id.id; }
-	_FORCE_INLINE_ bool operator<(const ObjectID &p_id) const { return id < p_id.id; }
-
-	_FORCE_INLINE_ void operator=(int64_t p_int64) { id = p_int64; }
-	_FORCE_INLINE_ void operator=(uint64_t p_uint64) { id = p_uint64; }
-
-	_FORCE_INLINE_ ObjectID() {}
-	_FORCE_INLINE_ explicit ObjectID(const uint64_t p_id) { id = p_id; }
-	_FORCE_INLINE_ explicit ObjectID(const int64_t p_id) { id = p_id; }
-};
-
 class ObjectDB {
 public:
 	static Object *get_instance(uint64_t p_object_id) {
-		GDExtensionObjectPtr obj = internal::gde_interface->object_get_instance_from_id(p_object_id);
+		GDExtensionObjectPtr obj = internal::gdextension_interface_object_get_instance_from_id(p_object_id);
 		if (obj == nullptr) {
 			return nullptr;
 		}
-		return reinterpret_cast<Object *>(internal::gde_interface->object_get_instance_binding(obj, internal::token, &Object::___binding_callbacks));
+		return internal::get_object_instance_binding(obj);
 	}
 };
 
@@ -138,11 +125,11 @@ T *Object::cast_to(Object *p_object) {
 		return nullptr;
 	}
 	StringName class_name = T::get_class_static();
-	GDExtensionObjectPtr casted = internal::gde_interface->object_cast_to(p_object->_owner, internal::gde_interface->classdb_get_class_tag(class_name._native_ptr()));
+	GDExtensionObjectPtr casted = internal::gdextension_interface_object_cast_to(p_object->_owner, internal::gdextension_interface_classdb_get_class_tag(class_name._native_ptr()));
 	if (casted == nullptr) {
 		return nullptr;
 	}
-	return reinterpret_cast<T *>(internal::gde_interface->object_get_instance_binding(casted, internal::token, &T::___binding_callbacks));
+	return dynamic_cast<T *>(internal::get_object_instance_binding(casted));
 }
 
 template <class T>
@@ -151,11 +138,11 @@ const T *Object::cast_to(const Object *p_object) {
 		return nullptr;
 	}
 	StringName class_name = T::get_class_static();
-	GDExtensionObjectPtr casted = internal::gde_interface->object_cast_to(p_object->_owner, internal::gde_interface->classdb_get_class_tag(class_name._native_ptr()));
+	GDExtensionObjectPtr casted = internal::gdextension_interface_object_cast_to(p_object->_owner, internal::gdextension_interface_classdb_get_class_tag(class_name._native_ptr()));
 	if (casted == nullptr) {
 		return nullptr;
 	}
-	return reinterpret_cast<const T *>(internal::gde_interface->object_get_instance_binding(casted, internal::token, &T::___binding_callbacks));
+	return dynamic_cast<const T *>(internal::get_object_instance_binding(casted));
 }
 
 } // namespace godot
