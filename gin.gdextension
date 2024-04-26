@@ -1,9 +1,11 @@
 [configuration]
 
-entry_symbol = "GinGodotEntry"
-compatibility_minimum = 4.0
+entry_symbol = "gin_init"
+compatibility_minimum = "4.1"
 
 [libraries]
 
-windows.debug.x86_64 = "res://bin/gin_godot.dll"
-windows.release.x86_64 = "res://bin/gin_godot.dll"
+windows.debug.x86_64 = "res://bin/libgin-godot.windows.debug.x86_64.dll"
+windows.release.x86_64 = "res://bin/libgin-godot.windows.release.x86_64.dll"
+linux.debug.x86_64 = "res://bin/libgin-godot.linux.debug.x86_64.so"
+linux.release.x86_64 = "res://bin/libgin-godot.linux.release.x86_64.so"
